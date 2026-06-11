@@ -12,7 +12,7 @@ import os
 import topojson as tp
 import shapely.geometry
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "web", "data")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "docs", "data")
 
 # 実際にHTMLから参照されているファイルのみ処理
 FILES = [
