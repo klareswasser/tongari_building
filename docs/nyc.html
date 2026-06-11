@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VWDZCDHSPJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VWDZCDHSPJ');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYC City Hall - Triangular Buildings within 30km</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
+<style>
+  body { margin: 0; padding: 0; }
+  #map { width: 100vw; height: 100vh; }
+  .info-box {
+    position: absolute; top: 10px; right: 10px; z-index: 1000;
+    background: rgba(255,255,255,0.94); padding: 14px 18px;
+    border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    font-family: -apple-system, "Helvetica Neue", sans-serif; font-size: 14px;
+    max-width: 280px;
+  }
+  .info-box h3 { margin: 0 0 8px; font-size: 16px; }
+  .legend-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .legend-swatch { width: 16px; height: 16px; border: 1px solid #333; border-radius: 2px; }
+  #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    z-index: 2000; background: rgba(255,255,255,0.95); padding: 20px 30px;
+    border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    font-family: -apple-system, sans-serif; font-size: 16px; }
+  .scale-circle-label {
+    background: none !important; border: none !important; box-shadow: none !important;
+    color: #888; font-size: 11px; font-family: -apple-system, "Helvetica Neue", sans-serif;
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="loading">Loading...</div>
+<div class="info-box">
+  <h3>NYC City Hall — 30km Triangular Buildings</h3>
+  <div class="legend-row">
+    <div class="legend-swatch" style="background:#E53935;"></div>
+    <span>Triangular buildings: <b>190</b></span>
+  </div>
+  <p style="margin:8px 0 0;font-size:12px;color:#666;">
+    Detected from ~718,134 buildings<br>
+    Overture Maps 2026-03-18.0
+  </p>
+</div>
+<script>
+const map = L.map('map').setView([40.7128, -74.006], 11);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a> '
+             + '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom: 19,
+  subdomains: 'abcd',
+}).addTo(map);
+
+// City Hall から半径30kmの円
+const cityHall = [40.7128, -74.006];
+L.circle(cityHall, {
+  radius: 30000,
+  color: '#999', weight: 1.2, dashArray: '5 4',
+  fillColor: '#999', fillOpacity: 0.03, interactive: false,
+}).addTo(map);
+L.marker(cityHall, {
+  icon: L.divIcon({ className: 'scale-circle-label',
+    html: 'City Hall — 30 km radius', iconSize: [140, 16], iconAnchor: [70, 8] }),
+  interactive: false,
+}).addTo(map);
+
+fetch('data/circle30_nyc_triangle_buildings.topojson')
+  .then(r => r.json())
+  .then(topo => {
+    const data = topojson.feature(topo, Object.values(topo.objects)[0]);
+    L.geoJSON(data, {
+      style: { color: '#B71C1C', weight: 2, fillColor: '#E53935', fillOpacity: 0.55 },
+      onEachFeature: function(f, layer) {
+        const p = f.properties;
+        let h = '<b>Triangular Building</b><br>Area: ' + p.area_m2 + ' m²';
+
+        layer.bindPopup(h);
+      },
+    }).addTo(map);
+    document.getElementById('loading').style.display = 'none';
+  })
+  .catch(e => {
+    document.getElementById('loading').textContent = 'GeoJSON load error: ' + e;
+  });
+</script>
+</body>
+</html>

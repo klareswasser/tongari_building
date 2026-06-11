@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VWDZCDHSPJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VWDZCDHSPJ');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>とんがりたてものマップ</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
+<style>
+  body { margin: 0; padding: 0; }
+  #map { width: 100vw; height: 100vh; background: #e5e3df; }
+
+
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+
+<script>
+const map = L.map('map', { zoomControl: false }).setView([34.6873, 135.5262], 12);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a> '
+             + '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom: 19,
+  subdomains: 'abcd',
+}).addTo(map);
+
+// 大阪城中心から半径15kmの円
+L.circle([34.6873, 135.5262], {
+  radius: 15000,
+  color: '#999', weight: 1.2, dashArray: '5 4',
+  fillColor: '#999', fillOpacity: 0.03, interactive: false,
+}).addTo(map);
+
+// カラフルなパレット
+const palette = [
+  {fill:'#FF6B8A',stroke:'#E5506E'}, {fill:'#FFA94D',stroke:'#E08930'},
+  {fill:'#FFD43B',stroke:'#D4AE20'}, {fill:'#69DB7C',stroke:'#4BB85E'},
+  {fill:'#66D9EF',stroke:'#40B5CC'}, {fill:'#A78BFA',stroke:'#8B6FE0'},
+  {fill:'#F9A8D4',stroke:'#D98AB5'}, {fill:'#FB923C',stroke:'#D97520'},
+  {fill:'#86EFAC',stroke:'#5CC98A'}, {fill:'#7DD3FC',stroke:'#55ACD5'},
+];
+let colorIdx = 0;
+
+fetch('data/osaka15_triangle_buildings.topojson')
+  .then(r => r.json())
+  .then(topo => {
+    const data = topojson.feature(topo, Object.values(topo.objects)[0]);
+    L.geoJSON(data, {
+      style: function() {
+        const c = palette[colorIdx % palette.length];
+        colorIdx++;
+        return { color: c.stroke, weight: 1.5, fillColor: c.fill, fillOpacity: 0.6 };
+      },
+      onEachFeature: function(f, layer) {
+        layer.on('click', function() {
+          const center = layer.getBounds().getCenter();
+          const lat = center.lat.toFixed(6);
+          const lng = center.lng.toFixed(6);
+          const url = 'https://www.google.com/maps/@' + lat + ',' + lng + ',3a,75y,0h,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192';
+          window.open(url, '_blank');
+        });
+      },
+    }).addTo(map);
+
+  })
+  .catch(e => {
+    console.error('GeoJSON 読込エラー:', e);
+  });
+</script>
+</body>
+</html>

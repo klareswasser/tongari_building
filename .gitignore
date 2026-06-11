@@ -1,0 +1,13 @@
+# Firebase cache
+.firebase/
+
+# Local data / output directories
+output/
+
+# OS generated files
+.DS_Store
+
+# Python virtual environment (if any)
+.venv/
+__pycache__/
+*.py[cod]

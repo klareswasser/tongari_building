@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VWDZCDHSPJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VWDZCDHSPJ');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>とんがりたてものマップ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: #fafafa;
+    font-family: 'Noto Sans JP', -apple-system, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 24px;
+  }
+  h1 {
+    font-size: 22px; font-weight: 700; color: #111;
+    letter-spacing: 0.04em; margin-bottom: 32px;
+    line-height: 1.6; text-align: center;
+  }
+  h1 .pink { color: #FF6B8A; }
+  .list {
+    list-style: none;
+    width: 100%; max-width: 320px;
+  }
+  .list li + li { border-top: 1px solid #eee; }
+  .list a {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 18px 4px;
+    text-decoration: none; color: inherit;
+    transition: opacity 0.2s;
+  }
+  .list a:hover { opacity: 0.5; }
+  .city {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; font-weight: 600; letter-spacing: 0.08em;
+    color: #222;
+  }
+  .meta {
+    font-size: 11px; color: #bbb; letter-spacing: 0.02em;
+  }
+  .footer {
+    margin-top: 48px;
+    font-size: 11px; color: #ccc; letter-spacing: 0.04em;
+  }
+  @media (max-width: 540px) {
+    body { padding: 36px 16px; }
+    h1 { font-size: 18px; }
+  }
+
+  /* Background Triangles */
+  #bg-canvas {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0; pointer-events: none; overflow: hidden;
+  }
+  h1, .list, .footer {
+    z-index: 1; position: relative;
+  }
+  .triangle {
+    position: absolute;
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    0% { transform: translateY(110vh) rotate(0deg); }
+    100% { transform: translateY(-30vh) rotate(720deg); }
+  }
+</style>
+</head>
+<body>
+
+<div id="bg-canvas"></div>
+
+<h1><span class="pink">とんがり</span><br><span class="pink">たてもの</span><br>マップ</h1>
+
+<ul class="list">
+  <li><a href="tokyo.html"><span class="city">TOKYO</span><span class="meta">5,750</span></a></li>
+  <li><a href="osaka.html"><span class="city">OSAKA</span><span class="meta">3,457</span></a></li>
+</ul>
+
+<script>
+  const canvas = document.getElementById('bg-canvas');
+  const colors = ['#FF6B8A', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#06B6D4', '#F43F5E', '#A3E635'];
+  const polygons = [
+    'polygon(50% 0%, 0% 100%, 100% 100%)',
+    'polygon(0% 0%, 100% 50%, 0% 100%)',
+    'polygon(0% 0%, 100% 0%, 50% 100%)',
+    'polygon(100% 0%, 100% 100%, 0% 50%)',
+    'polygon(20% 0%, 100% 80%, 0% 100%)',
+    'polygon(100% 20%, 0% 100%, 80% 0%)',
+    'polygon(0% 20%, 80% 100%, 100% 0%)',
+    'polygon(0% 0%, 100% 100%, 0% 100%)',
+    'polygon(0% 0%, 100% 0%, 100% 100%)',
+    'polygon(50% 0%, 100% 50%, 50% 100%)',
+    'polygon(0% 100%, 50% 0%, 80% 100%)',
+    'polygon(10% 80%, 90% 80%, 50% 10%)',
+    'polygon(30% 0%, 70% 100%, 0% 100%)',
+    'polygon(0% 50%, 100% 0%, 100% 100%)',
+    'polygon(100% 50%, 0% 0%, 0% 100%)',
+    'polygon(20% 100%, 80% 100%, 100% 0%)'
+  ];
+
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'triangle';
+    
+    // Varying sizes from 10px to 60px
+    const size = Math.random() * 50 + 10;
+    const left = Math.random() * 100;
+    const startY = Math.random() * 100;
+    const duration = Math.random() * 25 + 15;
+    const delay = Math.random() * -30;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const shape = polygons[Math.floor(Math.random() * polygons.length)];
+    const opacity = Math.random() * 0.4 + 0.1;
+    const initialRotation = Math.random() * 360;
+
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    el.style.left = `${left}vw`;
+    el.style.background = color;
+    el.style.opacity = opacity;
+    el.style.clipPath = shape;
+    el.style.webkitClipPath = shape;
+    el.style.animationDuration = `${duration}s`;
+    el.style.animationDelay = `${delay}s`;
+    
+    canvas.appendChild(el);
+  }
+</script>
+
+</body>
+</html>

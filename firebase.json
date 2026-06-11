@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "site": "triangle-buildings",
+    "public": "docs",
+    "ignore": [
+      "firebase.json",
+      "**/.*"
+    ]
+  }
+}
