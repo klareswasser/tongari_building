@@ -27,7 +27,7 @@
 
 
 <script>
-const map = L.map('map', { zoomControl: false }).setView([35.6852, 139.7528], 11);
+const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([35.6852, 139.7528], 11);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png', {
   attribution: '&copy; <a href="https://carto.com/">CARTO</a> '
              + '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',

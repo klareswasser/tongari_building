@@ -31,8 +31,11 @@ if git remote | grep -q 'origin'; then
   echo "\n🚀  GitHub へ push 中..."
   cd "$REPO_DIR"
   
-  # 必要なソースファイルのみ git add
-  git add docs/ .gitignore deploy.sh firebase.json .firebaserc README.md *.py 2>/dev/null || true
+  # 必要なソースファイルのみ git add（存在しないファイルがあっても失敗しないよう個別に追加）
+  git add docs/ 2>/dev/null || true
+  git add .gitignore deploy.sh firebase.json .firebaserc 2>/dev/null || true
+  git add README.md 2>/dev/null || true
+  git add *.py 2>/dev/null || true
   
   if git diff --cached --quiet; then
     echo "   変更なし — push をスキップしました"
