@@ -12,35 +12,51 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>とんがりたてものマップ</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
 <style>
   body { margin: 0; padding: 0; }
-  #map { width: 100vw; height: 100vh; background: #e5e3df; }
-
-
+  #map { width: 100vw; height: 100vh; }
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-
 <script>
-const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([35.6852, 139.7528], 11);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png', {
-  attribution: '&copy; <a href="https://carto.com/">CARTO</a> '
-             + '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-  maxZoom: 19,
-  subdomains: 'abcd',
-}).addTo(map);
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+  center: [139.7528, 35.6852], // [lng, lat]
+  zoom: 10.5,
+  minZoom: 2,
+  maxZoom: 19
+});
 
-// 皇居中心から半径30kmの円
-L.circle([35.6852, 139.7528], {
-  radius: 30000,
-  color: '#999', weight: 1.2, dashArray: '5 4',
-  fillColor: '#999', fillOpacity: 0.03, interactive: false,
-}).addTo(map);
+// 半径30kmの多角形円を生成する関数
+function createGeoJSONCircle(center, radiusInKm, points = 64) {
+  const [lng, lat] = center;
+  const km = radiusInKm;
+  const ret = [];
+  const distanceX = km / (111.32 * Math.cos(lat * Math.PI / 180));
+  const distanceY = km / 110.574;
+  
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    ret.push([lng + x, lat + y]);
+  }
+  ret.push(ret[0]); // 閉じる
+  
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [ret]
+    }
+  };
+}
 
 // カラフルなパレット
 const palette = [
@@ -50,33 +66,119 @@ const palette = [
   {fill:'#F9A8D4',stroke:'#D98AB5'}, {fill:'#FB923C',stroke:'#D97520'},
   {fill:'#86EFAC',stroke:'#5CC98A'}, {fill:'#7DD3FC',stroke:'#55ACD5'},
 ];
-let colorIdx = 0;
 
-fetch('data/circle30_triangle_buildings.topojson')
-  .then(r => r.json())
-  .then(topo => {
-    const data = topojson.feature(topo, Object.values(topo.objects)[0]);
-    L.geoJSON(data, {
-      style: function() {
-        const c = palette[colorIdx % palette.length];
-        colorIdx++;
-        return { color: c.stroke, weight: 1.5, fillColor: c.fill, fillOpacity: 0.6 };
-      },
-      onEachFeature: function(f, layer) {
-        layer.on('click', function() {
-          const center = layer.getBounds().getCenter();
-          const lat = center.lat.toFixed(6);
-          const lng = center.lng.toFixed(6);
-          const url = 'https://www.google.com/maps/@' + lat + ',' + lng + ',3a,75y,0h,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192';
-          window.open(url, '_blank');
-        });
-      },
-    }).addTo(map);
-
-  })
-  .catch(e => {
-    console.error('GeoJSON 読込エラー:', e);
+map.on('load', () => {
+  // 皇居中心から半径30kmの円を描画
+  map.addSource('circle-30km', {
+    type: 'geojson',
+    data: createGeoJSONCircle([139.7528, 35.6852], 30)
   });
+  map.addLayer({
+    id: 'circle-30km-fill',
+    type: 'fill',
+    source: 'circle-30km',
+    paint: {
+      'fill-color': '#999',
+      'fill-opacity': 0.03
+    }
+  });
+  map.addLayer({
+    id: 'circle-30km-outline',
+    type: 'line',
+    source: 'circle-30km',
+    paint: {
+      'line-color': '#999',
+      'line-width': 1.2,
+      'line-dasharray': [5, 4]
+    }
+  });
+
+  // 建物データを読み込んで描画
+  fetch('data/circle30_triangle_buildings.topojson')
+    .then(r => r.json())
+    .then(topo => {
+      const data = topojson.feature(topo, Object.values(topo.objects)[0]);
+      
+      // パレットカラーを事前に各フィーチャーに設定
+      data.features.forEach((f, idx) => {
+        const c = palette[idx % palette.length];
+        f.properties.fillColor = c.fill;
+        f.properties.strokeColor = c.stroke;
+      });
+
+      map.addSource('buildings', {
+        type: 'geojson',
+        data: data
+      });
+
+      map.addLayer({
+        id: 'buildings-fill',
+        type: 'fill',
+        source: 'buildings',
+        paint: {
+          'fill-color': ['get', 'fillColor'],
+          'fill-opacity': 0.6
+        }
+      });
+
+      map.addLayer({
+        id: 'buildings-outline',
+        type: 'line',
+        source: 'buildings',
+        paint: {
+          'line-color': ['get', 'strokeColor'],
+          'line-width': 1.5
+        }
+      });
+    })
+    .catch(e => {
+      console.error('GeoJSON 読込エラー:', e);
+    });
+});
+
+// クリックイベント
+map.on('click', 'buildings-fill', (e) => {
+  if (e.features.length > 0) {
+    const f = e.features[0];
+    const geom = f.geometry;
+    
+    let lng = 0, lat = 0, count = 0;
+    if (geom.type === 'Polygon') {
+      const ring = geom.coordinates[0];
+      ring.forEach(coord => {
+        lng += coord[0];
+        lat += coord[1];
+        count++;
+      });
+      lng /= count;
+      lat /= count;
+    } else if (geom.type === 'MultiPolygon') {
+      const polygon = geom.coordinates[0];
+      const ring = polygon[0];
+      ring.forEach(coord => {
+        lng += coord[0];
+        lat += coord[1];
+        count++;
+      });
+      lng /= count;
+      lat /= count;
+    } else {
+      lng = e.lngLat.lng;
+      lat = e.lngLat.lat;
+    }
+    
+    const url = 'https://www.google.com/maps/@' + lat.toFixed(6) + ',' + lng.toFixed(6) + ',3a,75y,0h,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192';
+    window.open(url, '_blank');
+  }
+});
+
+// カーソル挙動
+map.on('mouseenter', 'buildings-fill', () => {
+  map.getCanvas().style.cursor = 'pointer';
+});
+map.on('mouseleave', 'buildings-fill', () => {
+  map.getCanvas().style.cursor = '';
+});
 </script>
 </body>
 </html>
